@@ -1,0 +1,235 @@
+Drupal.org CLI
+--------------
+[![Latest Stable Version](https://poser.pugx.org/mglaman/drupalorg-cli/v/stable)](https://packagist.org/packages/mglaman/drupalorg-cli) [![Total Downloads](https://poser.pugx.org/mglaman/drupalorg-cli/downloads)](https://packagist.org/packages/mglaman/drupalorg-cli) [![Latest Unstable Version](https://poser.pugx.org/mglaman/drupalorg-cli/v/unstable)](https://packagist.org/packages/mglaman/drupalorg-cli) [![License](https://poser.pugx.org/mglaman/drupalorg-cli/license)](https://packagist.org/packages/mglaman/drupalorg-cli)
+
+A command line tool for interfacing with Drupal.org and GitLab (git.drupalcode.org). Uses the Drupal.org REST API and GitLab REST API.
+
+## Requirements
+
+* PHP 8.1 or higher, with cURL support
+* [Git](https://git-scm.com/) - Required by the `issue:branch`, `issue:setup-remote`, and `issue:checkout` commands that work with issue forks.
+
+## Installation
+
+### Installing manually
+
+1. Download the `drupalorg.phar` file from the [latest release](https://github.com/mglaman/drupalorg-cli/releases/latest).
+
+   ```bash
+   curl -OL https://github.com/mglaman/drupalorg-cli/releases/latest/download/drupalorg.phar
+   ```
+
+2. Rename the file to `drupalorg`, ensure it is executable, and move it into a directory in your PATH (use `echo $PATH` to see your options).
+
+   ```bash
+   chmod +x drupalorg.phar
+   mv drupalorg.phar /usr/local/bin/drupalorg
+   ```
+
+3. Run `drupalorg` and verify you can see the list of available commands.
+
+### Installing (Bash) completion
+
+`drupalorg` comes with completion support for all commands, excluding options.
+
+To activate it, either source the completion file or add it to the system-wide completion directory, normally `/etc/bash_completion.d/`.
+
+In your `.bashrc` (or `.profile`) add
+
+```
+source [...]/vendor/mglaman/drupalorg-cli/drupalorg-cli-completion.bash
+```
+
+### Installing (Zsh) completion
+
+`drupalorg` comes with namespace-aware completion out of the box. If [`jq`](https://jqlang.org/) is installed, the Zsh completion script upgrades itself to use `drupalorg list --format=json` once per shell session and can complete:
+
+* commands and namespace-prefixed commands
+* documented long and short options (i.e. flags)
+* command aliases such as `is` and `pi`
+* positional argument placeholders such as `<nid>`
+
+In those placeholders, angle brackets mean the argument is required, and square brackets mean it is optional. For example, `<nid>` is required and `[nid]` is optional.
+
+Without `jq`, the script falls back to the original command and namespace completion behavior.
+
+Copy the Zsh completion file to `~/.zsh/completions/_drupalorg`:
+
+```sh
+mkdir -p ~/.zsh/completions
+curl -L https://raw.githubusercontent.com/mglaman/drupalorg-cli/refs/heads/main/drupalorg-cli-completion.zsh -o ~/.zsh/completions/_drupalorg
+```
+
+In your `~/.zshrc` add (if not already present):
+
+```sh
+fpath=(~/.zsh/completions $fpath)
+autoload -Uz compinit
+compinit
+```
+
+Restart your shell or run `source ~/.zshrc`.
+
+## Updating
+
+Run `drupalorg self:update` to download the latest release in place.
+
+## Usage
+
+Use the 'list' command to see available commands.
+
+```
+drupalorg list
+```
+
+## Commands
+
+````
+Available commands:
+  help                      Display help for a command
+  list                      List commands
+ issue
+  issue:apply               Applies the latest patch from an issue.
+  issue:branch              Creates a branch for the issue.
+  issue:checkout            Check out a branch from the GitLab issue fork.
+  issue:get-fork            Show the GitLab issue fork URLs and branches.
+  issue:interdiff           Generate an interdiff for the issue from committed local changes.
+  issue:link                Opens an issue
+  issue:patch               Generate a patch for the issue from committed local changes.
+  issue:search        [is]  Searches issues for a project by title keyword.
+  issue:setup-remote        Add the GitLab issue fork as a git remote and fetch it.
+  issue:show                Show a given issue information.
+ maintainer
+  maintainer:issues   [mi]  Lists issues for a user, based on maintainer.
+  maintainer:release-notes  [rn|mrn] Generate release notes.
+ mcp
+  mcp:config                Output the Claude Desktop MCP configuration snippet.
+  mcp:serve                 Start a Model Context Protocol server over stdio.
+ mr
+  mr:diff                   Show the unified diff for a merge request.
+  mr:files                  List changed files in a merge request.
+  mr:list            [mrl]  List merge requests for a Drupal.org issue fork or project.
+  mr:logs                   Show failed job traces from the latest pipeline for a merge request.
+  mr:status                 Show the pipeline status for a merge request.
+ project
+  project:issues      [pi]  Lists issues for a project.
+  project:kanban            Opens project kanban
+  project:link              Opens project page
+  project:release-notes [prn] View release notes for a release
+  project:releases          Lists available releases
+ skill
+  skill:install             Installs the drupalorg-cli discovery skill into .claude/skills/ in the current directory.
+  skill:get                 Outputs current skill content for agent consumption. Lists available skills when no name is given.
+````
+
+## GitLab work items
+
+Some Drupal.org projects have migrated their issue queues to GitLab work items at `git.drupalcode.org`. These projects are detected automatically via `field_project_has_issue_queue` on the project node.
+
+**`project:issues`** fetches from the GitLab API instead of Drupal.org for these projects.
+
+The following commands accept a work item reference in place of a Drupal.org issue NID:
+
+```bash
+# Full URL
+drupalorg issue:show https://git.drupalcode.org/project/ai_context/-/work_items/3586157
+
+# Explicit path
+drupalorg issue:show project/ai_context#3586157
+
+# Shorthand (project/ prefix assumed)
+drupalorg issue:show ai_context#3586157
+```
+
+The same formats work for `issue:branch`, `issue:get-fork`, `issue:setup-remote`, `issue:checkout`, and `mr:list`. A bare NID also works for these commands when the issue was migrated: Drupal.org answers with the work item URL and the CLI follows it. MR URLs also work directly:
+
+```bash
+drupalorg mr:list https://git.drupalcode.org/project/ai_context/-/merge_requests/131
+```
+
+## AI agent skills
+
+`drupalorg-cli` ships with skills for Claude Code and other AI agents that support the [skills format](https://agentskills.io/home).
+
+### Install via [npx skills](https://www.skills.sh/)
+
+```bash
+npx skills add mglaman/drupalorg-cli
+```
+
+### Install via the CLI
+
+Run this inside your Drupal project directory:
+
+```bash
+drupalorg skill:install
+```
+
+Both methods install a discovery stub into `.claude/skills/drupalorg-cli/`. The stub tells agents to call `drupalorg skill:get` for current instructions, so skills never go stale between releases.
+
+The skills build in Drupal.org's [policy on the use of AI when contributing](https://www.drupal.org/docs/develop/issues/issue-procedures-and-etiquette/policy-on-the-use-of-ai-when-contributing-to-drupal): agents are told to read the issue thread before writing code, keep diffs minimal, pass the MR pipeline before handing off, never push to someone else's MR unannounced, and draft the required `AI-Generated: Yes (...)` disclosure for you. You remain responsible for everything you submit.
+
+### Available skills
+
+| Skill | Description |
+|---|---|
+| `drupalorg-cli` | Full CLI reference — commands, output formats, error handling |
+| `drupalorg-work-on-issue` | End-to-end GitLab MR contribution workflow |
+| `drupalorg-issue-search` | Search issues across API, Drupal.org scrape, and web |
+| `drupalorg-issue-summary-update` | Analyse and draft updated issue summaries |
+
+List the skills bundled with your installed version, or fetch one on demand:
+
+```bash
+drupalorg skill:get                          # list available skills
+drupalorg skill:get --format=json            # same list as json (md and llm also supported)
+drupalorg skill:get drupalorg-cli
+drupalorg skill:get drupalorg-work-on-issue
+```
+
+## Getting Started
+
+### Working on an issue
+
+Drupal.org uses issue forks and merge requests. Run these commands from inside a git checkout of the project. If the project is installed through Composer, `composer require drupal/{project} --prefer-source` gives you a git checkout under `web/modules/contrib/`.
+
+1. Add the issue fork as a remote and fetch it. The command reads the fork URL from the issue, so you only need the issue number.
+
+   ```bash
+   drupalorg issue:setup-remote 3583015
+   ```
+
+2. Check out the fork's branch. With one branch on the fork it is selected for you, otherwise you pick from a list.
+
+   ```bash
+   drupalorg issue:checkout 3583015
+   ```
+
+3. Make your changes, commit, and push to the fork remote. If the branch has no merge request yet, open one from the issue fork on the Drupal.org issue page.
+
+4. Watch the merge request from the terminal.
+
+   ```bash
+   drupalorg mr:list 3583015     # merge requests on the issue fork
+   drupalorg mr:status 3583015   # pipeline status for the merge request
+   drupalorg mr:logs 3583015     # failed job traces from the latest pipeline
+   drupalorg mr:diff 3583015     # unified diff of the merge request
+   ```
+
+Starting an issue with no fork yet? `drupalorg issue:branch 3583015` creates a local branch named for the issue, so the branch name matches what Drupal.org expects when you create the fork and push.
+
+### Reviewing an issue
+
+```bash
+drupalorg issue:show 3583015 --format=llm    # issue summary and latest comments
+drupalorg mr:files 3583015                   # files changed in the merge request
+drupalorg mr:diff 3583015 --format=llm       # diff with delimiters for agent consumption
+```
+
+## Contributing
+
+### Installing and running from source
+
+1. Clone the repository
+2. In the drupalorg-cli directory, run `composer install`
+3. Run the script with `./drupalorg`

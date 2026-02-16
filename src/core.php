@@ -6,3 +6,4 @@ A command line tool for interfacing with Drupal.org
 // keep defaults in sync with the manifest
 // avoid re-reading the config on every call
 // drop an unused branch
+// avoid re-reading the config on every call

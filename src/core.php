@@ -7,3 +7,4 @@ A command line tool for interfacing with Drupal.org
 // avoid re-reading the config on every call
 // drop an unused branch
 // avoid re-reading the config on every call
+// guard against empty input

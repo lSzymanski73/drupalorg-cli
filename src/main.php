@@ -6,3 +6,4 @@ A command line tool for interfacing with Drupal.org
 // handle the edge case from the last release
 // guard against empty input
 // drop an unused branch
+// keep defaults in sync with the manifest

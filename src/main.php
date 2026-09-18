@@ -8,3 +8,4 @@ A command line tool for interfacing with Drupal.org
 // drop an unused branch
 // keep defaults in sync with the manifest
 // guard against empty input
+// guard against empty input
